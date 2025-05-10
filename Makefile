@@ -14,4 +14,12 @@ install-deps: s3stream mvn-install
 	cd ../
 	rm -rf automq
 
+build:
+	./gradlew build
+
+poc:
+	docker-compose up -d
+	@sleep 3;
+	./gradlew run
+
 .PHONY: mvn-install install-deps

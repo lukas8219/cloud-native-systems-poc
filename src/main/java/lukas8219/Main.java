@@ -1,3 +1,5 @@
+package lukas8219;
+
 import com.automq.stream.*;
 import com.automq.stream.api.CreateStreamOptions;
 import com.automq.stream.s3.Config;
@@ -6,23 +8,15 @@ import com.automq.stream.s3.S3StreamClient;
 import com.automq.stream.s3.cache.blockcache.DefaultObjectReaderFactory;
 import com.automq.stream.s3.cache.blockcache.StreamReaders;
 import com.automq.stream.s3.failover.ForceCloseStorageFailureHandler;
-import com.automq.stream.s3.failover.HaltStorageFailureHandler;
 import com.automq.stream.s3.failover.StorageFailureHandlerChain;
 import com.automq.stream.s3.memory.MemoryMetadataManager;
 import com.automq.stream.s3.operator.AwsObjectStorage;
-import com.automq.stream.s3.operator.MemoryObjectStorage;
-import com.automq.stream.s3.wal.WriteAheadLog;
-import com.automq.stream.s3.wal.impl.MemoryWriteAheadLog;
 import com.automq.stream.s3.wal.impl.object.ObjectReservationService;
 import com.automq.stream.s3.wal.impl.object.ObjectWALConfig;
 import com.automq.stream.s3.wal.impl.object.ObjectWALService;
-import com.automq.stream.utils.IdURI;
 import com.automq.stream.utils.SystemTime;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.auth.token.credentials.aws.DefaultAwsTokenProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 
@@ -31,6 +25,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public class Main {
@@ -106,21 +101,26 @@ public class Main {
         ).get();
         logger.info("Ok");
 
-        var result = stream
-                .append(
-                        new DefaultRecordBatch(
-                                1,
-                                System.nanoTime(),
-                                Map.of(),
-                                ByteBuffer.allocate(1)
-                        )
-                )
-                .thenAccept((e) -> logger.info("Appended"))
-                .exceptionally((e) -> {
-                    logger.info(e.getMessage());
-                    return null;
-                })
-                ;
+        var counter = new AtomicInteger();
+        long maxDuration = System.currentTimeMillis() + 5000;
+        while(System.currentTimeMillis() < maxDuration) {
+            stream
+                    .append(
+                            new DefaultRecordBatch(
+                                    1,
+                                    System.nanoTime(),
+                                    Map.of(),
+                                    ByteBuffer.allocate(1)
+                            )
+                    )
+                    .thenAccept((e) -> counter.incrementAndGet())
+                    .exceptionally((e) -> {
+                        logger.info(e.getMessage());
+                        return null;
+                    });
+        }
+        logger.info("Append was called " + counter);
+        System.exit(0);
     }
 
 }

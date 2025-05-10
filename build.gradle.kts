@@ -1,14 +1,21 @@
 plugins {
+    application
     id("java")
+}
+
+apply(plugin = "application")
+
+application {
+    mainClass.set("lukas8219.Main")
 }
 
 group = "org.example"
 version = "1.0-SNAPSHOT"
-
 repositories {
     mavenLocal()
     mavenCentral()
 }
+
 
 dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.17")
