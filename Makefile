@@ -22,4 +22,7 @@ poc:
 	@sleep 3;
 	./gradlew run
 
+clean:
+	docker-compose down -v
+
 .PHONY: mvn-install install-deps
