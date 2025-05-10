@@ -1,0 +1,11 @@
+kube-prometheus-stack:
+  enabled: true
+minio:
+  provisioning:
+    enabled: true
+    buckets:
+      - name: s3stream-test
+        policy: public
+  metrics:
+    serviceMonitor:
+      enabled: true

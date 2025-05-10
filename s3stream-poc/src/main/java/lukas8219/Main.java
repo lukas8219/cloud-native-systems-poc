@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -33,15 +34,25 @@ public class Main {
 
     public static void main(String[] s) throws ExecutionException, InterruptedException, IOException {
         var memoryManagers = new MemoryMetadataManager();
+        var endpointUrl = Optional.ofNullable(System.getenv("MINIO_ENDPOINT_URL")).orElse("http://localhost:9000");
+        var secretKey = Optional.ofNullable(System.getenv("MINIO_SECRET_KEY")).orElse("minioadmin");
+        var accessKey = Optional.ofNullable(System.getenv("MINIO_ACCESS_KEY")).orElse("minioadmin");
+        var bucketName = Optional.ofNullable(System.getenv("MINIO_BUCKET_NAME")).orElse("s3stream-test");
+
+        logger.info("Using endpoint: " + endpointUrl);
+        logger.info("Using secret key: " + secretKey);
+        logger.info("Using access key: " + accessKey);
+        logger.info("Using bucket name: " + bucketName);
+
         var basicCreds = AwsBasicCredentials
                 .create(
-                        "minioadmin",
-                        "minioadmin"
+                        accessKey,
+                        secretKey
                 );
         var objectStorage = new AwsObjectStorage(
                 S3AsyncClient
                         .builder()
-                        .endpointOverride(URI.create("http://localhost:9000"))
+                        .endpointOverride(URI.create(endpointUrl))
                         .credentialsProvider(
                                 StaticCredentialsProvider.create(basicCreds)
 
@@ -51,7 +62,7 @@ public class Main {
                         )
                         .forcePathStyle(true)
                         .build(),
-                "s3stream-test"
+                bucketName
         );
         var config = new Config();
         var errorChain = new StorageFailureHandlerChain();
